@@ -4521,7 +4521,61 @@ function version(){document.title='요술방망이 세계 음식대백과 '+RELE
 version();addEventListener('pageshow',version);
 window.__FOOD_V825={version:RELEASE,engine:ENGINE,searchWhite,deleteCard};
 })();
-</script></body></html>
+</script><script id="food-v826-manual-owner">
+(()=>{'use strict';
+const RELEASE='V8.26',ENGINE='NS90.312';
+const active=new Set();
+const clean=t=>String(t||'').replace(/^\s*[◆○…]\s*/,'').trim();
+const html=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const unique=a=>[...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))];
+function progress(panel,name,detail){const p=panel.querySelector('.rep-preview-v5');if(p)p.innerHTML='<div class="preview-card"><h3>🔎 '+html(name)+' 검색 중…</h3><p>'+html(detail)+'</p></div>';return p}
+async function resolve(name,depth,cc,notify){
+ const names=[name];try{if(typeof V3_aliases==='function')names.push(...V3_aliases(name))}catch(_){}
+ const c=countries?.[cc]||{};
+ if(depth>=2)for(const country of unique([c.name,c.en,cc]).slice(0,2))names.push(name+' '+country,country+' '+name,name+' '+country+' 음식',country+' '+name+' 요리');
+ if(depth>=3){
+  try{if(typeof ns90294WikidataTitles==='function')names.push(...(await ns90294WikidataTitles(name,'food',{aliases:names,sectionLabel:'음식'})||[]))}catch(_){}
+  if(typeof v22SearchHits==='function')for(const q of unique(names).slice(0,10)){try{for(const h of (await v22SearchHits(q,'food')||[]).slice(0,5))names.push(h?.title)}catch(_){}}
+ }
+ if(depth>=4&&typeof ns9069WikidataHits==='function')for(const q of unique(names).slice(0,14)){try{for(const h of (await ns9069WikidataHits(q,'food')||[]).slice(0,6))names.push(h?.title)}catch(_){}}
+ const list=unique(names).slice(0,[0,2,6,14,24][depth]);
+ let lastError='';for(let i=0;i<list.length;i++){
+  notify('후보 '+(i+1)+'/'+list.length+' · '+list[i]);
+  try{const v=await ONE_CARD_ENGINE.resolve({section:'food',name:cardInputName(list[i])});if(v?.desc)return {v,error:''}}catch(e){lastError=String(e?.message||e);console.warn('[V8.26 search]',e)}
+ }
+ return {v:null,error:lastError};
+}
+async function search(button){
+ const panel=button.closest('.rep-card-panel-v5');if(!panel||!panel.closest('#food'))return;
+ const cc=String(COUNTRY||''),name=clean(button.textContent),key=cc+'|'+name;
+ if(!name||active.has(key))return;active.add(key);
+ const storageKey='magic_food_v826_attempt|'+key;
+ let depth=1;try{depth=Math.min(4,Number(localStorage.getItem(storageKey)||0)+1);localStorage.setItem(storageKey,String(depth))}catch(_){}
+ button.disabled=true;button.textContent='… '+name;progress(panel,name,depth+'차 검색 연결 중…');
+ let result={v:null,error:''};try{result=await resolve(name,depth,cc,detail=>progress(panel,name,detail))}catch(e){result.error=String(e?.message||e)}finally{active.delete(key);button.disabled=false}
+ if(String(COUNTRY||'')!==cc||!button.isConnected)return;
+ if(result.v?.desc){
+  try{ns9053SaveReady(v12Request('food',name),result.v);ns90154MarkSearched('food',name);localStorage.removeItem(storageKey)}catch(e){console.warn('[V8.26 cache]',e)}
+  button.textContent='◆ '+name;button.className='rep-card-btn-v5 verified-ready';
+  try{openRepresentativePreview('food',name,result.v,panel)}catch(e){progress(panel,name,'미리보기 표시 오류: '+String(e?.message||e))}
+ }else{
+  button.textContent='○ '+name;button.className='rep-card-btn-v5 can-make';
+  const p=panel.querySelector('.rep-preview-v5');if(p)p.innerHTML='<div class="preview-card"><h3>'+html(name)+'</h3><p>'+(result.error?'검색 오류: '+html(result.error):depth+'차 검색에서 결과를 찾지 못했습니다.')+'</p><p>'+(depth<4?'다시 누르면 '+(depth+1)+'차로 검색 범위를 넓힙니다.':'4차 검색까지 완료했습니다.')+'</p></div>';
+ }
+}
+// Window capture is earlier in the event path than legacy document capture listeners.
+// This prevents the old handler from swallowing the tap before the new search can start.
+window.addEventListener('click',e=>{
+ const b=e.target?.closest?.('#food .rep-card-panel-v5 .rep-card-btn-v5.can-make');
+ if(!b)return;
+ e.preventDefault();e.stopImmediatePropagation();search(b);
+},true);
+function version(){document.title='요술방망이 세계 음식대백과 '+RELEASE;const b=document.getElementById('ns9015Banner');if(b)b.textContent='✅ '+RELEASE+' · '+ENGINE+' · FOOD ONLY';const badge=document.getElementById('v820Version');if(badge)badge.textContent=RELEASE+' · '+ENGINE}
+version();window.addEventListener('pageshow',version);
+window.__FOOD_V826={version:RELEASE,engine:ENGINE,search};
+})();
+</script>
+</body></html>
 <!-- NS90.130: exact NS90.120 proven ONE MASTER baseline restore. No search/resolver logic added. -->
 <script>
 
