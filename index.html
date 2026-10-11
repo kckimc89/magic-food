@@ -146,7 +146,16 @@ body.view-cards #detail .cards .item>.actions{display:none}
  window.FOOD46={eligible,cache,db,flush,rawRemove(k){rawRemove.call(localStorage,k)},async load(){const d=await db();const entries=await new Promise((res,rej)=>{const a=[],t=d.transaction('local','readonly'),r=t.objectStore('local').openCursor();r.onsuccess=()=>{const c=r.result;if(c){a.push([c.key,c.value]);c.continue()}else res(a)};r.onerror=()=>rej(r.error)});for(const [k,v]of entries){if(!pending.has(k)){const live=rawGet.call(localStorage,k);if(live!==null&&live!==v){cache.set(k,live);pending.set(k,live)}else cache.set(k,v)}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(eligible(k)&&!cache.has(k)){const v=rawGet.call(localStorage,k);if(v!==null){cache.set(k,v);pending.set(k,v)}}}ready=true;await flush();},async replace(data){const d=await db();await new Promise((res,rej)=>{const t=d.transaction('local','readwrite'),st=t.objectStore('local');for(const [k,v]of Object.entries(data))if(eligible(k))st.put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});for(const [k,v]of Object.entries(data))if(eligible(k))cache.set(k,v);ready=true;},async verify(data){const d=await db();return await new Promise((res,rej)=>{const t=d.transaction('local','readonly'),st=t.objectStore('local');let bad=null;for(const [k,v]of Object.entries(data)){if(!eligible(k))continue;const r=st.get(k);r.onsuccess=()=>{if(r.result!==v)bad=k}}t.oncomplete=()=>res(bad);t.onerror=()=>rej(t.error)})}};
  window.FOOD46.load().then(()=>{window.dispatchEvent(new Event('food46ready'))}).catch(e=>console.error('IDB bridge',e));
 })();
-</script></head><body><div id="ns9015Banner" style="position:sticky;top:0;z-index:9999;background:#173f70;color:white;text-align:center;font-weight:800;padding:10px 8px;font-size:15px;letter-spacing:.2px">✅ 세계 음식대백과 V8.123 · NS90.339 · FOOD MIGRATION V8.123</div>
+</script><style id="v8123-simple-backup-css">
+#backupModal{overflow:hidden!important;overscroll-behavior:contain!important;touch-action:pan-y!important}
+#backupModal .backup-panel{box-sizing:border-box!important;max-height:calc(100dvh - 28px)!important;max-height:calc(100vh - 28px);overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;position:relative!important}
+#backupModal .backup-actions{display:grid!important;gap:12px!important;margin-top:14px!important}
+#backupModal .backup-actions > :not(#ns140Copy):not(#ns140Paste):not(#ns140Share):not(#ns140Import):not(#ns140FileInput){display:none!important}
+#backupModal .backup-actions button{display:block!important;width:100%!important;min-height:56px!important;text-align:left!important;font-size:17px!important;white-space:normal!important}
+#backupModal .backup-panel > :not(.backup-close):not(h2):not(.backup-actions){display:none!important}
+#backupModal .backup-close{position:sticky;top:0;z-index:5}
+#v8107Audit{display:none!important}
+</style></head><body><div id="ns9015Banner" style="position:sticky;top:0;z-index:9999;background:#173f70;color:white;text-align:center;font-weight:800;padding:10px 8px;font-size:15px;letter-spacing:.2px">✅ 세계 음식대백과 V8.123 · NS90.339 · FOOD MIGRATION V8.123</div>
 <style>
 #kbBtn{position:fixed;right:14px;bottom:14px;z-index:12020;border:0;border-radius:999px;padding:13px 17px;background:#244b76;color:#fff;font-weight:900;box-shadow:0 4px 14px #0003}
 #kbPanel{display:none;position:fixed;inset:0;z-index:12030;background:#f7f4ec;overflow:auto;padding:16px}
@@ -5562,7 +5571,23 @@ window.addEventListener('DOMContentLoaded',()=>{const panel=document.getElementB
 });
 })();
 </script>
-</body></html>
+<script id="v8123-simple-backup-behavior">
+(()=>{'use strict';
+ const init=()=>{
+  const modal=document.getElementById('backupModal');if(!modal)return;
+  const panel=modal.querySelector('.backup-panel');if(!panel)return;
+  const actions=panel.querySelector('.backup-actions');if(actions){
+   const order=['ns140Copy','ns140Paste','ns140Share','ns140Import'];
+   order.forEach(id=>{const b=document.getElementById(id);if(b)actions.appendChild(b)});
+   const f=document.getElementById('ns140FileInput');if(f)actions.appendChild(f);
+  }
+  const update=()=>{const opened=!modal.classList.contains('hidden');document.documentElement.style.overflow=opened?'hidden':'';document.body.style.overflow=opened?'hidden':''};
+  new MutationObserver(update).observe(modal,{attributes:true,attributeFilter:['class']});update();
+  modal.addEventListener('touchmove',e=>{if(e.target===modal)e.preventDefault()},{passive:false});
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script></body></html>
 <!-- NS90.130: exact NS90.120 proven ONE MASTER baseline restore. No search/resolver logic added. -->
 <script>
 
@@ -5884,10 +5909,21 @@ async function buildTransfer(withPhotos=false){if(window.FOOD46?.flush)await win
   const blob=new Blob([JSON.stringify(snapshot)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');
   anchor.href=url;anchor.download='V8_90_복원전_보호백업_'+Date.now()+'.json';document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   if(!confirm('복원 전 보호백업 파일이 실제로 저장되었습니까? 확인하지 못했다면 취소하세요.'))return {cancelled:true};
-  // V8.123: Remove obsolete ns171 record store. Its transaction aborts with
-  // null in Safari and the visible UI never reads it. Persist into the actual
-  // country/section card store below, then verify every name there.
+  const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('magic_wand_cards_ns171',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('card_records'))req.result.createObjectStore('card_records',{keyPath:'recordKey'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
   let written=0,kept=0;
+  try{
+   const readAll=()=>new Promise((resolve,reject)=>{const tx=db.transaction('card_records','readonly'),req=tx.objectStore('card_records').getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});
+   const all=await readAll(),changes=[];
+   for(const [bucket,items] of rows){
+    const existing=new Set(all.filter(x=>String(x.recordKey||'').startsWith(bucket+'|')).map(x=>identity(x.name)));
+    for(const item of items){const n=identity(item.name);if(existing.has(n)){kept++;continue}
+     changes.push({...item,id:'restore870_'+encodeURIComponent(n),stableKey:bucket+'|'+n,recordKey:bucket+'|restore870_'+encodeURIComponent(n)});existing.add(n)}
+   }
+   if(changes.length)await new Promise((resolve,reject)=>{const tx=db.transaction('card_records','readwrite'),store=tx.objectStore('card_records');for(const item of changes)store.put(item);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('카드 저장 실패'));tx.onabort=()=>reject(tx.error||Error('카드 저장 취소'))});
+   const after=await readAll();
+   for(const [bucket,items] of rows){const names=new Set(after.filter(x=>String(x.recordKey||'').startsWith(bucket+'|')).map(x=>identity(x.name)));for(const item of items)if(!names.has(identity(item.name)))throw Error('복원 검증 실패: '+bucket+' '+item.name)}
+   written=changes.length;
+  }finally{db.close()}
   // V8.123: mirror the validated union to the SAME bucket-based database used
   // by getCustom/renderSection. The legacy record database alone is not sufficient.
   // Existing cards always win; only missing names are appended.
@@ -5903,7 +5939,7 @@ async function buildTransfer(withPhotos=false){if(window.FOOD46?.flush)await win
    for(const x of [...current,...local])if(x&&x.name&&!union.has(norm(x.name)))union.set(norm(x.name),x);
    let added=0;
    for(const x of items)if(!union.has(norm(x.name))){union.set(norm(x.name),{...x});added++}
-   if(!added){kept+=items.length;}else{kept+=items.length-added;
+   if(added){
     const combined=[...union.values()];
     await cardDBPut(country,section,combined);
     const verified=await cardDBGet(country,section);
@@ -5911,7 +5947,7 @@ async function buildTransfer(withPhotos=false){if(window.FOOD46?.flush)await win
     for(const x of combined)if(!names.has(norm(x.name)))throw Error('누적 저장 검증 실패: '+bucket+' '+x.name);
     // The local mirror is best effort: the durable DB is authoritative.
     try{localStorage.setItem(key,JSON.stringify(combined.map(x=>typeof ns9055CompactCardForLocal==='function'?ns9055CompactCardForLocal(x):x)))}catch(e){console.warn('V8.123 local mirror quota',bucket,e)}
-    mirrored+=added;written+=added;
+    mirrored+=added;
    }
   }
   // V8.123: preserve named candidate lists independently of completed cards.
@@ -6010,38 +6046,15 @@ async function buildTransfer(withPhotos=false){if(window.FOOD46?.flush)await win
    }
    if(changed){try{localStorage.setItem(addedKey,JSON.stringify(added))}catch(e){throw Error('카드 연결 목록 저장 실패: '+country+' (저장공간을 확인하세요)')}}
   }
-  // Restore exported photo records to the actual photo database; this was
-  // entirely missing in V8.123. Never delete existing photos.
-  let photosDone=0,photosKept=0;
-  const photos=Object.entries(d.photos||{});
-  if(photos.length){
-   const photoDb=await openPhotoDB();
-   try{
-    for(const [key,value] of photos){
-     await new Promise((resolve,reject)=>{
-      const tx=photoDb.transaction('photos','readwrite'),store=tx.objectStore('photos');
-      const q=store.get(key);
-      q.onsuccess=()=>{if(q.result!==undefined&&q.result!==null){photosKept++;return}store.put(value,key)};
-      q.onerror=()=>reject(q.error||Error('사진 조회 실패: '+key));
-      tx.oncomplete=()=>resolve();
-      tx.onerror=()=>reject(tx.error||Error('사진 저장 실패: '+key));
-      tx.onabort=()=>reject(tx.error||Error('사진 저장 취소: '+key));
-     });
-     const found=await new Promise((resolve,reject)=>{const tx=photoDb.transaction('photos','readonly'),q=tx.objectStore('photos').get(key);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)});
-     if(found===undefined||found===null)throw Error('사진 검증 실패: '+key);
-     photosDone++;
-    }
-   }finally{photoDb.close()}
-  }
   try{CARD_MEM.clear()}catch(_){}
-  return {written,kept,linked,hidden,mirrored,photosDone,photosKept,localDone:0};
+  return {written,kept,linked,hidden,mirrored,photosDone:0,localDone:0};
  }
 
  function filename(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `요술방망이_NS90.140_통합백업_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.json`}
  async function copyText(t){if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(t);return true}catch(_){}}const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok}
  async function readText(){if(navigator.clipboard?.readText){try{const t=await navigator.clipboard.readText();if(t)return t}catch(_){}}return prompt('Safari에서 복사한 검색결과를 이 칸에 붙여넣은 뒤 확인을 눌러 주세요.','')||''}
  async function doCopy(){try{const d=await buildTransfer(true),t=JSON.stringify(d);if(!valid(d))throw Error('복사 자료 형식 검증 실패');const cardCount=countCards(d.cards),photoCount=Object.keys(d.photos||{}).length;const size=(new Blob([t])).size; if(size>8*1024*1024&&!confirm('사진을 포함한 자료가 '+(size/1024/1024).toFixed(1)+'MB입니다. iPad 클립보드에서 제한될 수 있습니다.\n\n복사를 시도할까요? (실패하면 파일명 없이 ‘통합 백업 공유/저장’과 ‘가져오기’를 이용할 수 있습니다.)'))return;if(await copyText(t))alert('전체 자료 복사 완료\n완성 카드 '+cardCount+'개 / 사진 '+photoCount+'개 / 검색후보 '+(d.visibleCandidates||[]).length+'개\n\n새 홈화면 앱에서 「전체 자료 붙여넣기」를 누르세요.\n파일 이름은 알 필요가 없습니다.');else alert('클립보드 복사 실패. 아래 「통합 백업 공유/저장」을 눌러 파일 앱에 저장한 뒤 새 앱에서 「통합 백업 가져오기」를 이용하세요. 파일 이름은 자동 생성됩니다.')}catch(e){console.error('전체 자료 복사 오류',e);alert('전체 자료 복사 오류\n('+(e?.name||'Error')+') '+(e?.message||String(e))+'\n\nSafari 원본 자료는 변경하지 않았습니다.')}}
- async function doPaste(){try{const t=await readText();if(!t)return;const d=JSON.parse(t);if(!valid(d))throw new Error('자료 형식이 맞지 않습니다. Safari에서 다시 복사해 주세요.');if(!confirm('Safari에서 복사한 전체 자료를 이 앱에 가져올까요?\n현재 검색엔진은 변경하지 않습니다.'))return;const r=await apply(d);if(r.cancelled)return;alert('전체 자료 가져오기 완료\n새 카드 '+r.written+'개 / 사진 확인 '+r.photosDone+'개 / 보라색 검색자료 '+(window.__V880_PURPLE_TRANSFER?.added||0)+'건 / 후보상태 '+(window.__V885_VISUAL_TRANSFER||0)+'건 누적');location.reload()}catch(e){alert('가져오기 실패: '+(e?.message||e))}}
+ async function doPaste(){try{const t=await readText();if(!t)return;const d=JSON.parse(t);if(!valid(d))throw new Error('자료 형식이 맞지 않습니다. Safari에서 다시 복사해 주세요.');if(!confirm('Safari에서 복사한 전체 자료를 이 앱에 가져올까요?\n현재 검색엔진은 변경하지 않습니다.'))return;const r=await apply(d);if(r.cancelled)return;alert('전체 자료 가져오기 완료\n새 카드 '+r.written+'개 / 보라색 검색자료 '+(window.__V880_PURPLE_TRANSFER?.added||0)+'건 / 후보상태 '+(window.__V885_VISUAL_TRANSFER||0)+'건 누적');location.reload()}catch(e){alert('가져오기 실패: '+(e?.message||e))}}
  async function doShare(){let backupStage="자료 수집";try{const d=await buildTransfer(true); if(d.previewAudit){const a=d.previewAudit;alert('V8.123 백업 사전 점검\n보라색 후보 '+a.total+'개\n설명 저장 확인 '+a.withPreview+'개\n설명 없는 후보 '+a.missingPreview.length+'개\n\n설명 없는 후보는 앱에서도 미리보기를 바로 열 수 없습니다.');}
  const nonempty=Object.entries(d.cards).filter(([k,v])=>Array.isArray(v)&&v.length).sort((a,b)=>a[0].localeCompare(b[0]));
  const report=nonempty.map(([k,v])=>k+' '+v.length+'개').join('\n');
@@ -6049,7 +6062,7 @@ async function buildTransfer(withPhotos=false){if(window.FOOD46?.flush)await win
  const warning=cn<12?'\n⚠ 중국 음식 카드가 화면의 12개보다 적습니다. 백업이 불완전할 수 있습니다.\n':'\n';
  if(cn<12){alert('백업 중단: 중국 음식 카드 '+cn+'개만 수집되었습니다. 화면의 12개와 일치하지 않아 불완전한 백업을 저장하지 않습니다.');return;}
  if(!confirm('백업 내용 확인\n카드 '+countCards(d.cards)+'개 / 사진 '+Object.keys(d.photos).length+'개 / 설정 '+Object.keys(d.local).length+'개 / 보라색 검색자료 '+Object.keys(d.local).filter(k=>k.startsWith('magic_ready_9053_')||k.startsWith('magic_v28_entity_')||k.startsWith('magic_v15_entity_')||k.startsWith('magic_v16_entity_')).length+'건 / 화면 보라색 '+(d.visibleCandidates||[]).length+'개 (검색결과 확인 '+(d.visibleCandidates||[]).filter(x=>x.verified?.desc).length+'개, 이름만 '+(d.visibleCandidates||[]).filter(x=>!x.verified?.desc).length+'개) / 후보목록 '+Object.keys(d.local).filter(k=>k.startsWith('magic_food_v837_added_')).length+'개\n※ 화면의 보라색 후보 상태도 별도로 이전합니다. 설명이 없는 후보는 클릭 시 검색하며, 검색완료 자료로 위장하지 않습니다.\n\n국가·분야별 카드 목록\n'+(report||'(카드 없음)')+'\n\n중국 음식 '+cn+'개 / 스페인 음식 '+es+'개'+warning+'\n진단된 저장 키(최대 20개):\n'+(window.__V861_CARD_DIAGNOSTICS||[]).filter(x=>x.includes('CN_')||x.includes('CN|')||x.includes('ES_')||x.startsWith('idb:')).slice(0,35).join('\n')+'\n이대로 백업 파일을 저장할까요?'))return;const blob=new Blob([JSON.stringify(d)],{type:'application/json'}),name=filename(),file=new File([blob],name,{type:'application/json'});if(navigator.canShare&&navigator.share&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'요술방망이 통합 백업'});return}catch(shareErr){if(shareErr?.name==='AbortError')return;console.warn('공유창 오류, 다운로드 방식으로 전환',shareErr)}}const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);alert('통합 백업 파일을 만들었습니다.\n파일 이름은 앱이 자동으로 정했습니다.')}catch(e){if(e?.name!=='AbortError'){console.error('통합 백업 오류',e);alert('통합 백업 오류 단계: '+backupStage+'\n('+(e?.name||'Error')+')\n'+(e?.message||String(e))+'\n\n현재 저장자료는 변경하지 않았습니다. 이 화면을 촬영해 주세요.') }}}
- async function doImport(f){if(!f)return;try{const d=JSON.parse(await f.text());if(!valid(d))throw new Error();if(confirm('「'+f.name+'」의 검색결과와 카드를 검사할까요?')){const r=await apply(d);if(r.cancelled)return;alert('전체 분야 카드 복원 및 표시 연결 완료\n보라색 검색자료 '+(window.__V880_PURPLE_TRANSFER?.added||0)+'건 / 후보상태 '+(window.__V885_VISUAL_TRANSFER||0)+'건 누적 (확인된 후보 '+(window.__V884_TRANSFER_DETAIL?.verifiedFromVisible||0)+'개 / 검색자료 없는 이름 '+(window.__V884_TRANSFER_DETAIL?.missingFromVisible||0)+'개)\n새 저장 카드 '+r.written+'개 / 기존 저장 카드 '+r.kept+'개 / 사진 확인 '+r.photosDone+'개\n화면 저장소 신규 누적 '+r.mirrored+'개\n음식 화면 이름표 추가 '+r.linked+'개 / 사용자가 숨긴 항목 '+r.hidden+'개\n기존 카드와 사진은 덮어쓰지 않았습니다.');location.reload()}}catch(e){console.error('V8.123 restore failure',e);alert('복원 중단: '+(e?.name||'Error')+' / '+(e?.message||String(e))+'\n원본 백업 파일은 안전합니다.')}}
+ async function doImport(f){if(!f)return;try{const d=JSON.parse(await f.text());if(!valid(d))throw new Error();if(confirm('「'+f.name+'」의 검색결과와 카드를 검사할까요?')){const r=await apply(d);if(r.cancelled)return;alert('전체 분야 카드 복원 및 표시 연결 완료\n보라색 검색자료 '+(window.__V880_PURPLE_TRANSFER?.added||0)+'건 / 후보상태 '+(window.__V885_VISUAL_TRANSFER||0)+'건 누적 (확인된 후보 '+(window.__V884_TRANSFER_DETAIL?.verifiedFromVisible||0)+'개 / 검색자료 없는 이름 '+(window.__V884_TRANSFER_DETAIL?.missingFromVisible||0)+'개)\n새 저장 카드 '+r.written+'개 / 기존 저장 카드 '+r.kept+'개\n화면 저장소 신규 누적 '+r.mirrored+'개\n음식 화면 이름표 추가 '+r.linked+'개 / 사용자가 숨긴 항목 '+r.hidden+'개\n기존 카드와 사진은 덮어쓰지 않았습니다.');location.reload()}}catch(e){alert('복원 실패: '+(e?.message||e))}}
  function wire(){const c=document.getElementById('ns140Copy'),p=document.getElementById('ns140Paste'),s=document.getElementById('ns140Share'),i=document.getElementById('ns140Import'),f=document.getElementById('ns140FileInput');if(c)c.onclick=doCopy;if(p)p.onclick=doPaste;if(s)s.onclick=doShare;if(i&&f)i.onclick=()=>f.click();if(f)f.onchange=async e=>{await doImport(e.target.files?.[0]);e.target.value=''};try{const w=document.querySelector('#backupModal .backup-warning');if(w)w.innerHTML='※ <b>가장 쉬운 이동:</b> Safari에서 「전체 자료 복사」 → 새 홈화면 앱에서 「전체 자료 붙여넣기」. 파일 경로나 이름을 알 필요가 없습니다.<br>※ iOS 보안상 웹앱이 파일 앱의 고정 경로를 몰래 읽을 수는 없습니다. 통합 백업은 파일명을 자동 생성하고 공유창을 이용해 저장할 수 있습니다.'}catch(_){}}
  function sync(){try{const b=document.getElementById('ns9015Banner');if(b)b.textContent='✅ '+V}catch(_){}try{if(window.__NS9021_ONE_ENGINE)window.__NS9021_ONE_ENGINE.version=V}catch(_){}}
  wire();sync();setTimeout(sync,0);setTimeout(sync,300);setTimeout(sync,1500);setTimeout(sync,3500);
